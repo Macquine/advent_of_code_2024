@@ -1,6 +1,7 @@
 INPUT_PATH = "./day2/input.txt"
 
 from typing import Literal
+from copy import deepcopy
 
 def get_reports(input_path: str) -> list[list[int]]:
     """loads in the input file
@@ -76,7 +77,7 @@ def check_adjacent_diff_valid(report) -> bool:
             return False
     return True
 
-def get_n_safe_reports(reports: list[list[int]]) -> int:
+def get_n_safe_reports(reports: list[list[int]], allow_one_violation: bool) -> int:
     """For all reports, get the number which are safe.
 
     Safe is being defined as:
@@ -86,13 +87,26 @@ def get_n_safe_reports(reports: list[list[int]]) -> int:
 
         returns: the number of reports which are safe
     """
-    monotonic_reports = [
-        (report_is_monotonic(report) and check_adjacent_diff_valid(report))
-        for report in reports].count(True)
-    return monotonic_reports
+    safe_count = 0
+    for report in reports:
+        # check if the report is sage without having to remove one value.
+        if (check_adjacent_diff_valid(report) and report_is_monotonic(report)):
+            safe_count +=1
+        else:
+            # check if the report can be made safe by removing exactly one if the numbers.
+            # try to remove each number one by one. If a safe report is found, stop and go to the next report.
+            if allow_one_violation is True:
+                for i in range(len(report)):
+                    report_copy = deepcopy(report)
+                    report_copy.pop(i)
+                    if check_adjacent_diff_valid(report_copy) and report_is_monotonic(report_copy):
+                        safe_count+=1
+                        break
+                
+    return safe_count
 
 reports = get_reports(INPUT_PATH)
-print(get_n_safe_reports(reports))
+print(get_n_safe_reports(reports, allow_one_violation=True))
 
 # NOTE: it would be possible to make some improvements.
 # 1. the difference between each adjacent number needs to
